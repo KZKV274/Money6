@@ -282,6 +282,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="ch-wrap"><div class="ch-ttl">📊 Расходы за 7 дней</div><canvas id="ch-mini"></canvas></div>
   <div class="st"><h3>⏱ Последние</h3><span style="font-size:12px;color:var(--cyan);cursor:pointer" onclick="showPage('transactions')">все →</span></div>
   <div id="recent-list"></div>
+  <div id="home-loans-wrap"></div>
 </div>
 
 <!-- TRANSACTIONS -->
@@ -481,10 +482,150 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="si" onclick="exportJSON()"><div class="si-ico">💾</div><div class="si-lbl"><strong>Резервная копия</strong><span>JSON файл</span></div><div class="si-arr">›</div></div>
   </div>
   <div class="sgrp">
+    <div class="sgrp-t">Дополнительно</div>
+    <div class="si" onclick="showPage('debts')"><div class="si-ico">🤝</div><div class="si-lbl"><strong>Долги</strong><span>Кто кому должен</span></div><div class="si-arr">›</div></div>
+    <div class="si" onclick="showPage('goals')"><div class="si-ico">🎯</div><div class="si-lbl"><strong>Цели и регулярные</strong><span>Накопления и подписки</span></div><div class="si-arr">›</div></div>
+    <div class="si" id="install-btn" onclick="triggerInstall()" style="display:none">
+      <div class="si-ico">📲</div>
+      <div class="si-lbl"><strong>Установить приложение</strong><span>Добавить на рабочий стол</span></div>
+      <div class="si-arr">›</div>
+    </div>
+    <div class="si" onclick="installWidget()">
+      <div class="si-ico">📱</div>
+      <div class="si-lbl"><strong>Инструкция установки</strong><span>Как добавить на экран</span></div>
+      <div class="si-arr">›</div>
+    </div>
+  </div>
+  <div class="sgrp">
     <div class="sgrp-t">Опасная зона</div>
     <div class="si" onclick="clearAll()"><div class="si-ico">🗑️</div><div class="si-lbl"><strong style="color:var(--red)">Очистить всё</strong><span>Удалить все данные</span></div><div class="si-arr">›</div></div>
   </div>
   <div style="text-align:center;padding:20px;color:var(--text3);font-size:11px;font-family:'Space Mono',monospace">FinFlow v2.0 · PWA · Google Drive</div>
+</div>
+
+<!-- LOANS PAGE -->
+<div id="pg-loans" class="pg">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><h2 style="font-size:18px;font-weight:700">🏦 Кредиты и долги</h2><div style="font-size:12px;color:var(--text3)" id="loans-sub"></div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p btn-sm" id="loans-add-btn" onclick="openLoanModal()">+ Добавить</button>
+    </div>
+  </div>
+
+  <!-- Tab switcher: Loans / Debts -->
+  <div class="ttabs" id="loans-section-tabs">
+    <div class="ttab ae" id="lsec-loans" onclick="setLoansSection('loans',this)">🏦 Кредиты</div>
+    <div class="ttab" id="lsec-debts" onclick="setLoansSection('debts',this)">🤝 Долги</div>
+  </div>
+
+  <!-- LOANS SECTION -->
+  <div id="loans-section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.2);border-radius:12px;padding:14px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Общий остаток</div>
+        <div style="font-size:20px;font-weight:700;font-family:'Space Mono',monospace;color:var(--red);margin-top:4px" id="loans-total">с 0</div>
+      </div>
+      <div style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:12px;padding:14px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">В месяц</div>
+        <div style="font-size:20px;font-weight:700;font-family:'Space Mono',monospace;color:var(--cyan);margin-top:4px" id="loans-monthly">с 0</div>
+      </div>
+    </div>
+
+    <!-- Upcoming payments alert -->
+    <div id="loans-alert" style="display:none;background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--yellow)"></div>
+
+    <div class="frow" id="loan-frow">
+      <div class="fc on" onclick="setLoanFilter('all',this)">Все</div>
+      <div class="fc" onclick="setLoanFilter('credit',this)">Кредиты</div>
+      <div class="fc" onclick="setLoanFilter('installment',this)">Рассрочки</div>
+      <div class="fc" onclick="setLoanFilter('mortgage',this)">Ипотека</div>
+      <div class="fc" onclick="setLoanFilter('done',this)">Закрытые</div>
+    </div>
+
+    <div id="loans-list"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="st" style="margin-bottom:8px"><h3>🗓️ Финансовая свобода</h3></div>
+      <div id="loans-freedom" style="font-size:13px;color:var(--text2);line-height:1.8"></div>
+    </div>
+  </div>
+
+  <!-- DEBTS SECTION -->
+  <div id="debts-section" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.2);border-radius:12px;padding:14px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Я должен</div>
+        <div style="font-size:20px;font-weight:700;font-family:'Space Mono',monospace;color:var(--red);margin-top:4px" id="debt-iowe">с 0</div>
+      </div>
+      <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:12px;padding:14px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Мне должны</div>
+        <div style="font-size:20px;font-weight:700;font-family:'Space Mono',monospace;color:var(--green);margin-top:4px" id="debt-owedme">с 0</div>
+      </div>
+    </div>
+    <div class="frow" id="debt-frow">
+      <div class="fc on" onclick="setDebtFilter('active',this)">Активные</div>
+      <div class="fc" onclick="setDebtFilter('owe',this)">Я должен</div>
+      <div class="fc" onclick="setDebtFilter('lent',this)">Мне должны</div>
+      <div class="fc" onclick="setDebtFilter('done',this)">Закрытые</div>
+    </div>
+    <div id="debt-list"></div>
+  </div>
+</div>
+
+<!-- MODAL: LOAN -->
+<div class="mbd" id="m-loan">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mttl" id="loan-modal-title">Новый кредит</div>
+    <div class="ttabs">
+      <div class="ttab ae" id="loan-tab-credit" onclick="setLoanType('credit',this)">💳 Кредит</div>
+      <div class="ttab" id="loan-tab-installment" onclick="setLoanType('installment',this)">🛍️ Рассрочка</div>
+      <div class="ttab" id="loan-tab-mortgage" onclick="setLoanType('mortgage',this)">🏠 Ипотека</div>
+    </div>
+    <div class="fg"><label class="fl">Название</label><input type="text" class="fi" id="loan-nm" placeholder="Кредит на телефон..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="fl">Общая сумма</label><input type="number" class="fi" id="loan-total" placeholder="0" oninput="calcLoanPayment()"></div>
+      <div class="fg"><label class="fl">Уже выплачено</label><input type="number" class="fi" id="loan-paid" placeholder="0" oninput="calcLoanPayment()"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="fl">Ставка % в год</label><input type="number" class="fi" id="loan-rate" placeholder="0" oninput="calcLoanPayment()"></div>
+      <div class="fg"><label class="fl">Срок (мес)</label><input type="number" class="fi" id="loan-months" placeholder="12" oninput="calcLoanPayment()"></div>
+    </div>
+    <div class="fg"><label class="fl">Ежемесячный платёж</label>
+      <div style="background:var(--bg3);border:1px solid var(--cyan);border-radius:12px;padding:12px 14px;font-size:18px;font-weight:700;font-family:'Space Mono',monospace;color:var(--cyan)" id="loan-payment-preview">— с</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="fl">Дата начала</label><input type="date" class="fi" id="loan-start"></div>
+      <div class="fg"><label class="fl">День платежа</label>
+        <select class="fs" id="loan-pay-day">
+          ${Array.from({length:28},(_,i)=>`<option value="${i+1}">${i+1}-е число</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Банк / организация</label><input type="text" class="fi" id="loan-bank" placeholder="Mbank, Оптима банк..."></div>
+    <div class="fg"><label class="fl">Счёт списания</label><select class="fs" id="loan-acc"></select></div>
+    <div class="fg" style="display:flex;align-items:center;gap:12px">
+      <label class="tgl"><input type="checkbox" id="loan-notify" checked><div class="tgl-t"></div></label>
+      <span style="font-size:13px;color:var(--text2)">🔔 Напоминание за 1 день до платежа</span>
+    </div>
+    <div class="fg"><label class="fl">Заметка</label><textarea class="fta" id="loan-note" placeholder="Доп. информация..."></textarea></div>
+    <div class="brow">
+      <button class="btn btn-s" onclick="closeModal('m-loan')">Отмена</button>
+      <button class="btn btn-p" onclick="saveLoan()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LOAN SCHEDULE -->
+<div class="mbd" id="m-loan-schedule">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mttl" id="schedule-title">График платежей</div>
+    <div id="schedule-table"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-s" onclick="closeModal('m-loan-schedule')">Закрыть</button>
+    </div>
+  </div>
 </div>
 
 <!-- NAV -->
@@ -493,7 +634,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="ni" data-pg="transactions" onclick="showPage('transactions')"><div class="ni-ico">📋</div><div class="ni-lbl">Операции</div></div>
   <div class="ni add" onclick="openAddTx('expense')"><div class="ni-ico">+</div><div class="ni-lbl">Добавить</div></div>
   <div class="ni" data-pg="analytics" onclick="showPage('analytics')"><div class="ni-ico">📊</div><div class="ni-lbl">Аналитика</div></div>
-  <div class="ni" data-pg="debts" onclick="showPage('debts')"><div class="ni-ico">🤝</div><div class="ni-lbl">Долги</div></div>
+  <div class="ni" data-pg="loans" onclick="showPage('loans')"><div class="ni-ico">🏦</div><div class="ni-lbl">Кредиты</div></div>
 </nav>
 
 <!-- MODAL: ADD TX -->
@@ -682,7 +823,8 @@ let S = {
   goals:[],
   recurring:[],
   debts:[],
-  profile:{name:'',currency:'KGS'}
+  profile:{name:'',currency:'KGS'},
+  loans:[]
 };
 
 // ===== STORAGE =====
@@ -710,6 +852,7 @@ function load(){
   if(!S.recurring) S.recurring=[];
   if(!S.goals) S.goals=[];
   if(!S.budgets) S.budgets=[];
+  if(!S.loans) S.loans=[];
 }
 
 // ===== BALANCE =====
@@ -768,6 +911,7 @@ function showPage(p){
   if(p==='budget') renderBudget();
   if(p==='goals') renderGoals();
   if(p==='debts') renderDebts();
+  if(p==='loans'){loansSection='loans';renderLoans();}
   if(p==='converter') calcConv();
   window.scrollTo(0,0);
 }
@@ -790,6 +934,7 @@ function renderHome(){
   renderAccGrid();
   renderRecent();
   renderMiniChart();
+  renderHomeLoans();
 }
 
 function renderAccGrid(){
@@ -824,6 +969,32 @@ function txHTML(t){
     </div>
     <div class="tx-amt ${cls}">${sign}${fmt(t.amount)}</div>
   </div>`;
+}
+
+function renderHomeLoans(){
+  const wrap=document.getElementById('home-loans-wrap');
+  if(!S.loans||!S.loans.length){wrap.innerHTML='';return}
+  const active=S.loans.filter(l=>!l.done);
+  if(!active.length){wrap.innerHTML='';return}
+  const totalMonthly=active.reduce((s,l)=>s+l.monthly,0);
+  wrap.innerHTML=`
+    <div class="st" style="margin-top:16px"><h3>🏦 Кредиты</h3><span style="font-size:12px;color:var(--cyan);cursor:pointer" onclick="showPage('loans')">все →</span></div>
+    <div class="card" style="border-color:rgba(255,23,68,.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:13px;color:var(--text2)">${active.length} активных · ${fmt(totalMonthly)}/мес</span>
+      </div>
+      ${active.slice(0,2).map(l=>{
+        const remain=l.total-l.paid;
+        const pct=Math.min(l.paid/l.total*100,100);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+            <span style="font-weight:500">${l.name}</span>
+            <span style="color:var(--red);font-family:'Space Mono',monospace">${fmt(remain)}</span>
+          </div>
+          <div class="pb"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--purple))"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
 // mini chart
@@ -1243,7 +1414,10 @@ function calcConv(){
   document.getElementById('cv-res').textContent=res.toFixed(2)+' '+to;
   document.getElementById('cv-rate').textContent='1 '+from+' = '+((RATES[from]||1)/(RATES[to]||1)).toFixed(4)+' '+to+' (офлайн)';
   const cur=['USD','EUR','RUB','KZT','CNY','GBP','TRY'];
-  document.getElementById('rates-tbl').innerHTML=cur.map(c=>'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">'+c+'</span><span style="font-family:\'Space Mono\',monospace;color:var(--cyan)">'+(1/RATES[c]).toFixed(4)+' / ₸</span></div>').join('');
+  document.getElementById('rates-tbl').innerHTML=cur.map(c=>{
+    const rate=RATES[c]||1;
+    return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">1 '+c+'</span><span style="font-family:\'Space Mono\',monospace;color:var(--cyan)">= '+rate.toFixed(2)+' с</span></div>';
+  }).join('');
 }
 function calcSplit(){
   const amt=parseFloat(document.getElementById('split-amt').value)||0;
@@ -1384,6 +1558,7 @@ async function gLoad(silent=false){
     const data=await r.json();
     Object.assign(S,data);
     if(!S.debts) S.debts=[];
+    if(!S.loans) S.loans=[];
     recalc();save();renderHome();
     if(!silent) toast('📲 Данные загружены из Drive','ok');
     const mod=new Date(f.modifiedTime).toLocaleString('ru');
@@ -1395,6 +1570,353 @@ function toggleGAuto(){
   localStorage.setItem('ff_auto',on?'1':'0');
   toast(on?'🔄 Авто-сохранение включено':'Авто-сохранение выключено');
 }
+
+// ===== LOANS SECTION TABS =====
+let loansSection='loans';
+function setLoansSection(sec,el){
+  loansSection=sec;
+  document.getElementById('lsec-loans').className='ttab'+(sec==='loans'?' ae':'');
+  document.getElementById('lsec-debts').className='ttab'+(sec==='debts'?' at':'');
+  document.getElementById('loans-section').style.display=sec==='loans'?'block':'none';
+  document.getElementById('debts-section').style.display=sec==='debts'?'block':'none';
+  document.getElementById('loans-add-btn').onclick=sec==='loans'?openLoanModal:openDebtModal;
+  document.getElementById('loans-add-btn').textContent=sec==='loans'?'+ Кредит':'+ Долг';
+  if(sec==='debts') renderDebts();
+  else renderLoans();
+}
+
+// ===== LOANS =====
+const LOAN_TYPES={credit:'💳 Кредит',installment:'🛍️ Рассрочка',mortgage:'🏠 Ипотека'};
+let loanType='credit',loanFilter='all',editLoanId=null;
+
+function openLoanModal(id=null){
+  editLoanId=id;
+  const loan=id?S.loans.find(l=>l.id===id):null;
+  document.getElementById('loan-modal-title').textContent=loan?'Редактировать':'Новый кредит';
+  loanType=loan?.type||'credit';
+  ['credit','installment','mortgage'].forEach(t=>{
+    const tab=document.getElementById('loan-tab-'+t);
+    if(tab) tab.className='ttab'+(loanType===t?' ae':'');
+  });
+  document.getElementById('loan-nm').value=loan?.name||'';
+  document.getElementById('loan-total').value=loan?.total||'';
+  document.getElementById('loan-paid').value=loan?.paid||'';
+  document.getElementById('loan-rate').value=loan?.rate||'';
+  document.getElementById('loan-months').value=loan?.months||'';
+  document.getElementById('loan-start').value=loan?.start||new Date().toISOString().split('T')[0];
+  document.getElementById('loan-bank').value=loan?.bank||'';
+  document.getElementById('loan-note').value=loan?.note||'';
+  document.getElementById('loan-notify').checked=loan?.notify!==false;
+  // Set payment day
+  const dayEl=document.getElementById('loan-pay-day');
+  if(dayEl) dayEl.value=loan?.payDay||5;
+  // Fill accounts
+  const sel=document.getElementById('loan-acc');
+  sel.innerHTML=S.accounts.map(a=>'<option value="'+a.id+'"'+(loan?.account===a.id?' selected':'')+'>'+a.name+'</option>').join('');
+  calcLoanPayment();
+  openModal('m-loan');
+}
+
+function setLoanType(t,el){
+  loanType=t;
+  ['credit','installment','mortgage'].forEach(x=>{
+    const tab=document.getElementById('loan-tab-'+x);
+    if(tab) tab.className='ttab';
+  });
+  if(el) el.className='ttab '+(t==='credit'?'ae':t==='installment'?'at':'ai');
+}
+
+function calcLoanPayment(){
+  const total=parseFloat(document.getElementById('loan-total').value)||0;
+  const paid=parseFloat(document.getElementById('loan-paid').value)||0;
+  const rate=parseFloat(document.getElementById('loan-rate').value)||0;
+  const months=parseInt(document.getElementById('loan-months').value)||0;
+  const remain=total-paid;
+  const el=document.getElementById('loan-payment-preview');
+  if(remain<=0||months<=0){el.textContent='— с';return}
+  let monthly;
+  if(rate===0){monthly=remain/months}
+  else{const r=rate/100/12;monthly=remain*(r*Math.pow(1+r,months))/(Math.pow(1+r,months)-1)}
+  el.textContent=fmt(Math.round(monthly))+' / мес';
+}
+
+function saveLoan(){
+  const nm=document.getElementById('loan-nm').value.trim();
+  const total=parseFloat(document.getElementById('loan-total').value);
+  const months=parseInt(document.getElementById('loan-months').value);
+  if(!nm){toast('Введите название','err');return}
+  if(!total||total<=0){toast('Введите сумму','err');return}
+  if(!months||months<=0){toast('Введите срок','err');return}
+  const paid=parseFloat(document.getElementById('loan-paid').value)||0;
+  const rate=parseFloat(document.getElementById('loan-rate').value)||0;
+  const remain=total-paid;
+  let monthly;
+  if(rate===0){monthly=remain/months}
+  else{const r=rate/100/12;monthly=remain*(r*Math.pow(1+r,months))/(Math.pow(1+r,months)-1)}
+  const payDay=parseInt(document.getElementById('loan-pay-day').value)||5;
+  const notify=document.getElementById('loan-notify').checked;
+  const loan={
+    id:editLoanId||uid(),type:loanType,name:nm,total,paid,
+    rate,months,monthly:Math.round(monthly),payDay,notify,
+    start:document.getElementById('loan-start').value,
+    account:document.getElementById('loan-acc').value,
+    bank:document.getElementById('loan-bank').value.trim(),
+    note:document.getElementById('loan-note').value.trim(),
+    payments:[],done:false,createdAt:new Date().toISOString()
+  };
+  if(editLoanId){
+    const i=S.loans.findIndex(l=>l.id===editLoanId);
+    if(i>=0){loan.payments=S.loans[i].payments||[];S.loans[i]=loan}
+  } else {
+    S.loans.push(loan);
+  }
+  // Request notification permission
+  if(notify && 'Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+  save();closeModal('m-loan');renderLoans();
+  toast(editLoanId?'✅ Обновлено':'✅ Кредит добавлен','ok');
+  editLoanId=null;
+}
+
+function setLoanFilter(f,el){
+  loanFilter=f;
+  document.querySelectorAll('#loan-frow .fc').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderLoans();
+}
+
+function loanMakePayment(id){
+  const loan=S.loans.find(l=>l.id===id);if(!loan) return;
+  const remain=loan.total-loan.paid;
+  const suggested=Math.min(loan.monthly,remain);
+  const input=prompt('💳 Внести платёж по "'+loan.name+'"?\nОстаток: '+fmt(remain)+'\nВведите сумму:',suggested);
+  if(!input) return;
+  const amt=parseFloat(input);
+  if(isNaN(amt)||amt<=0) return;
+  loan.paid=Math.min(loan.paid+amt,loan.total);
+  const monthKey=new Date().toISOString().slice(0,7); // YYYY-MM
+  if(!loan.payments) loan.payments=[];
+  loan.payments.push({month:monthKey,amount:amt,date:new Date().toISOString().split('T')[0]});
+  if(loan.paid>=loan.total){loan.done=true;toast('🎉 Кредит закрыт!','ok')}
+  else toast('✅ Платёж '+fmt(amt)+' внесён','ok');
+  S.transactions.push({
+    id:uid(),type:'expense',amount:amt,category:'other',
+    description:'Платёж: '+loan.name,account:loan.account||S.accounts[0]?.id||'',
+    date:new Date().toISOString().split('T')[0],tags:['кредит'],note:'',
+    createdAt:new Date().toISOString()
+  });
+  recalc();save();renderLoans();renderHome();
+}
+
+function openLoanSchedule(id){
+  const loan=S.loans.find(l=>l.id===id);if(!loan) return;
+  document.getElementById('schedule-title').textContent='📅 '+loan.name;
+  const remain=loan.total-loan.paid;
+  const rate=loan.rate/100/12;
+  const rows=[];
+  let balance=remain;
+  const startDate=new Date(loan.start);
+  const paidMonths=loan.payments||[];
+  for(let i=0;i<loan.months&&balance>0;i++){
+    const d=new Date(startDate);
+    d.setMonth(d.getMonth()+i+1);
+    const monthKey=d.toISOString().slice(0,7);
+    const interest=rate>0?Math.round(balance*rate):0;
+    const principal=Math.min(Math.round(loan.monthly)-interest,balance);
+    balance=Math.max(0,balance-principal);
+    const paid=paidMonths.find(p=>p.month===monthKey);
+    const isPast=d<=new Date();
+    rows.push({n:i+1,date:d,monthKey,interest,principal,payment:loan.monthly,balance,paid,isPast});
+  }
+  document.getElementById('schedule-table').innerHTML=`
+    <div style="overflow-x:auto;margin:-4px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'Space Mono',monospace">
+        <thead>
+          <tr style="color:var(--text3);border-bottom:1px solid var(--border)">
+            <th style="padding:8px 6px;text-align:left">#</th>
+            <th style="padding:8px 6px;text-align:left">Дата</th>
+            <th style="padding:8px 6px;text-align:right">Платёж</th>
+            <th style="padding:8px 6px;text-align:right">Остаток</th>
+            <th style="padding:8px 6px;text-align:center">✓</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr style="border-bottom:1px solid var(--border);${r.paid?'opacity:.5':''}${!r.paid&&r.isPast?';background:rgba(255,23,68,.05)':''}">
+              <td style="padding:8px 6px;color:var(--text3)">${r.n}</td>
+              <td style="padding:8px 6px;color:var(--text2)">${r.date.toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'})}</td>
+              <td style="padding:8px 6px;text-align:right;color:var(--cyan)">${fmt(r.payment)}</td>
+              <td style="padding:8px 6px;text-align:right;color:${r.balance===0?'var(--green)':'var(--text2)'}">${fmt(r.balance)}</td>
+              <td style="padding:8px 6px;text-align:center;font-size:16px">${r.paid?'✅':r.isPast?'❗':'⬜'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap">
+      <span>✅ Оплачено</span><span>❗ Просрочено</span><span>⬜ Ожидается</span>
+    </div>`;
+  openModal('m-loan-schedule');
+}
+
+function deleteLoan(id){
+  if(!confirm('Удалить кредит?')) return;
+  S.loans=S.loans.filter(l=>l.id!==id);
+  save();renderLoans();toast('Удалено');
+}
+
+// Check upcoming payments and show alert + notification
+function checkLoanNotifications(){
+  if(!S.loans) return;
+  const today=new Date();
+  const todayDay=today.getDate();
+  const upcoming=S.loans.filter(l=>!l.done&&l.notify&&Math.abs(l.payDay-todayDay)<=1);
+  const alert=document.getElementById('loans-alert');
+  if(!alert) return;
+  if(upcoming.length){
+    alert.style.display='block';
+    alert.innerHTML='⏰ '+upcoming.map(l=>{
+      const diff=l.payDay-todayDay;
+      const when=diff===0?'Сегодня':diff===1?'Завтра':'Вчера';
+      return when+' платёж по "<b>'+l.name+'</b>" — '+fmt(l.monthly);
+    }).join('<br>');
+    // Browser notification
+    if('Notification' in window && Notification.permission==='granted'){
+      upcoming.forEach(l=>{
+        const diff=l.payDay-todayDay;
+        if(diff===1){
+          new Notification('FinFlow 💳',{body:'Завтра платёж: '+l.name+' — '+fmt(l.monthly),icon:'icons/icon-192.png'});
+        }
+      });
+    }
+  } else {
+    alert.style.display='none';
+  }
+}
+
+function renderLoans(){
+  if(!S.loans) S.loans=[];
+  const active=S.loans.filter(l=>!l.done);
+  const totalDebt=active.reduce((s,l)=>s+(l.total-l.paid),0);
+  const totalMonthly=active.reduce((s,l)=>s+l.monthly,0);
+  document.getElementById('loans-total').textContent=fmt(totalDebt);
+  document.getElementById('loans-monthly').textContent=fmt(totalMonthly);
+  document.getElementById('loans-sub').textContent=active.length+' активных';
+  checkLoanNotifications();
+
+  let list=[...S.loans];
+  if(loanFilter==='done') list=list.filter(l=>l.done);
+  else if(loanFilter==='all') list=list.filter(l=>!l.done);
+  else list=list.filter(l=>l.type===loanFilter&&!l.done);
+  list.sort((a,b)=>a.payDay-b.payDay);
+
+  const el=document.getElementById('loans-list');
+  if(!list.length){
+    el.innerHTML='<div class="empty"><div class="ei">'+(loanFilter==='done'?'🎉':'🏦')+'</div><p>'+(loanFilter==='done'?'Нет закрытых кредитов':'Нет кредитов!')+'</p></div>';
+  } else {
+    el.innerHTML=list.map(loan=>{
+      const remain=loan.total-loan.paid;
+      const pct=Math.min(loan.paid/loan.total*100,100);
+      const clr=pct>75?'var(--green)':pct>40?'var(--yellow)':'var(--red)';
+      const monthsLeft=loan.monthly>0?Math.ceil(remain/loan.monthly):0;
+      const endDate=new Date(loan.start);
+      endDate.setMonth(endDate.getMonth()+loan.months);
+      const today=new Date().getDate();
+      const daysToPayment=((loan.payDay-today)+31)%31;
+      const paymentSoon=daysToPayment<=1;
+      const typeIcon={credit:'💳',installment:'🛍️',mortgage:'🏠'}[loan.type]||'💳';
+      return `
+      <div class="card" style="margin-bottom:12px;opacity:${loan.done?.6:1};border-color:${paymentSoon&&!loan.done?'rgba(255,214,0,.4)':loan.done?'var(--border)':'rgba(255,23,68,.2)'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              ${typeIcon} ${loan.name}
+              ${loan.bank?'<span style="font-size:10px;color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:5px">'+loan.bank+'</span>':''}
+              ${loan.notify?'<span style="font-size:12px">🔔</span>':''}
+            </div>
+            <div style="font-size:12px;color:var(--text3);margin-top:3px">
+              ${LOAN_TYPES[loan.type]||''} · ${loan.rate?loan.rate+'% год':'беспроцентный'} · платёж ${loan.payDay}-го
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:10px">
+            <div style="font-size:17px;font-weight:700;font-family:'Space Mono',monospace;color:var(--red)">${fmt(remain)}</div>
+            <div style="font-size:11px;color:var(--text3)">осталось</div>
+          </div>
+        </div>
+        <!-- Progress -->
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px">
+            <span>Выплачено ${Math.round(pct)}%</span>
+            <span>${fmt(loan.paid)} / ${fmt(loan.total)}</span>
+          </div>
+          <div class="pb" style="height:10px"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,${clr},${clr}88)"></div></div>
+        </div>
+        <!-- Stats row -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="background:var(--bg3);border-radius:8px;padding:7px 10px;flex:1;text-align:center">
+            <div style="font-size:10px;color:var(--text3)">В месяц</div>
+            <div style="font-size:12px;font-weight:700;font-family:'Space Mono',monospace;color:var(--cyan)">${fmt(loan.monthly)}</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:7px 10px;flex:1;text-align:center">
+            <div style="font-size:10px;color:var(--text3)">Осталось</div>
+            <div style="font-size:12px;font-weight:700;font-family:'Space Mono',monospace;color:var(--yellow)">${loan.done?'✅':monthsLeft+' мес'}</div>
+          </div>
+          <div style="background:${paymentSoon?'rgba(255,214,0,.1)':'var(--bg3)'};border-radius:8px;padding:7px 10px;flex:1;text-align:center;border:1px solid ${paymentSoon?'rgba(255,214,0,.3)':'transparent'}">
+            <div style="font-size:10px;color:var(--text3)">Платёж</div>
+            <div style="font-size:12px;font-weight:700;color:${paymentSoon?'var(--yellow)':'var(--text2)'}">${loan.done?'—':daysToPayment===0?'Сегодня!':daysToPayment===1?'Завтра':loan.payDay+'-го'}</div>
+          </div>
+        </div>
+        <!-- Actions -->
+        ${!loan.done?`<div style="display:flex;gap:8px">
+          <button class="btn btn-p" style="font-size:12px;padding:10px;flex:2" onclick="loanMakePayment('${loan.id}')">💳 Внести платёж</button>
+          <button class="btn btn-s btn-sm" onclick="openLoanSchedule('${loan.id}')" title="График">📅</button>
+          <button class="btn btn-s btn-sm" onclick="openLoanModal('${loan.id}')" title="Редактировать">✏️</button>
+          <button class="btn btn-d btn-sm" onclick="deleteLoan('${loan.id}')" title="Удалить">🗑️</button>
+        </div>`:`<button class="btn btn-s" style="font-size:12px;padding:8px" onclick="deleteLoan('${loan.id}')">🗑️ Удалить</button>`}
+      </div>`;
+    }).join('');
+  }
+
+  // Freedom date
+  const fc=document.getElementById('loans-freedom');
+  if(!active.length){fc.innerHTML='🎉 У вас нет активных кредитов!';return}
+  const lastEnd=active.reduce((max,l)=>{
+    const d=new Date(l.start);d.setMonth(d.getMonth()+l.months);
+    return d>max?d:max;
+  },new Date());
+  const months=Math.ceil((lastEnd-new Date())/2629800000);
+  const totalOverpay=active.reduce((s,l)=>{
+    return s+(l.monthly*l.months-(l.total-l.paid));
+  },0);
+  fc.innerHTML=`Последний кредит закроется <b>${lastEnd.toLocaleDateString('ru',{month:'long',year:'numeric'})}</b> — через <b>${Math.max(0,months)} мес.</b><br>Платежей в месяц: <b style="color:var(--red)">${fmt(totalMonthly)}</b><br>Переплата: <b style="color:var(--yellow)">${fmt(Math.max(0,totalOverpay))}</b>`;
+}
+
+// ===== WIDGET =====
+function installWidget(){
+  toast('📲 Добавьте приложение на главный экран через меню браузера');
+  // Show install instructions based on browser
+  const ua=navigator.userAgent;
+  let msg='';
+  if(/iPhone|iPad/.test(ua)) msg='iOS: Нажмите кнопку "Поделиться" → "На экран Домой"';
+  else if(/Android/.test(ua)) msg='Android: Меню браузера (⋮) → "Добавить на главный экран"';
+  else msg='ПК: Иконка установки в адресной строке браузера';
+  setTimeout(()=>toast('💡 '+msg),3000);
+}
+
+// PWA install prompt
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  // Show install button in settings
+  const btn=document.getElementById('install-btn');
+  if(btn) btn.style.display='flex';
+});
+function triggerInstall(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.then(r=>{deferredPrompt=null})}
+  else installWidget();
+}
+window.addEventListener('appinstalled',()=>{toast('✅ FinFlow установлен!','ok')});
 
 // ===== DEMO DATA =====
 function addDemo(){
